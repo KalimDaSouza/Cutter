@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wycinacz – Optymalizacja cięcia</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .hint {
+            color: #999;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+        }
+        
+        .results {
+            margin-top: 30px;
+        }
+        
+        .result-card {
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+        
+        .result-card:hover {
+            transform: translateX(5px);
+        }
+        
+        .result-card-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+        }
+        
+        .result-card-content {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .result-card-waste {
+            color: #c33;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+        
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Wycinacz</h1>
+        <p class="subtitle">Optymalizacja cięcia kształtowników stalowych</p>
+        
+        <div class="input-section">
+            <label for="cuts">Długości wymaganych elementów (mm):</label>
+            <input 
+                type="text" 
+                id="cuts" 
+                placeholder="np. 4500, 3000, 2500, 7000"
+            />
+            <p class="hint">Podaj długości oddzielone przecinkami</p>
+        </div>
+        
+        <div class="input-section">
+            <label for="stocks">Dostępne długości sztang (mm):</label>
+            <input 
+                type="text" 
+                id="stocks" 
+                value="12100, 6000, 15100"
+            />
+            <p class="hint">Długości materiału dostępnego w magazynie</p>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn-primary" onclick="calculateCuts()">Oblicz</button>
+            <button class="btn-secondary" id="copyBtn" onclick="copyToClipboard()" disabled>Kopiuj</button>
+            <button class="btn-secondary" id="pdfBtn" onclick="exportPDF()" disabled>Eksport PDF</button>
+            <button class="btn-secondary" id="txtBtn" onclick="exportTXT()" disabled>Eksport TXT</button>
+        </div>
+        
+        <div id="error" style="display: none;" class="error"></div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Obliczam optymalny plan cięcia...</p>
+        </div>
+        
+        <div id="results" class="results"></div>
+    </div>
+    
+    <script>
+        let currentResult = null;
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        function enableButtons(enabled) {
+            document.getElementById('copyBtn').disabled = !enabled;
+            document.getElementById('pdfBtn').disabled = !enabled;
+            document.getElementById('txtBtn').disabled = !enabled;
+        }
+        
+        async function calculateCuts() {
+            const cutsInput = document.getElementById('cuts').value;
+            const stocksInput = document.getElementById('stocks').value;
+            
+            if (!cutsInput.trim()) {
+                showError('Podaj długości elementów do cięcia');
+                return;
+            }
+            
+            try {
+                const requiredCuts = cutsInput.split(',').map(s => parseInt(s.trim())).filter(v => v > 0);
+                const stockLengths = stocksInput.split(',').map(s => parseInt(s.trim())).filter(v => v > 0);
+                
+                if (requiredCuts.length === 0) {
+                    showError('Brak poprawnych długości do cięcia');
+                    return;
+                }
+                
+                if (stockLengths.length === 0) {
+                    showError('Brak poprawnych długości sztang');
+                    return;
+                }
+                
+                document.getElementById('loading').classList.add('active');
+                document.getElementById('results').innerHTML = '';
+                enableButtons(false);
+                
+                const response = await fetch('/api/optimize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        requiredCuts: requiredCuts,
+                        stockLengths: stockLengths
+                    })
+                });
+                
+                document.getElementById('loading').classList.remove('active');
+                
+                if (!response.ok) {
+                    showError('Błąd optymalizacji - sprawdź wprowadzone dane');
+                    return;
+                }
+                
+                currentResult = await response.json();
+                displayResults(currentResult);
+                enableButtons(true);
+                
+            } catch (error) {
+                document.getElementById('loading').classList.remove('active');
+                showError('Błąd podczas przetwarzania danych');
+                console.error(error);
+            }
+        }
+        
+        function displayResults(result) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            
+            result.plans.forEach((plan, index) => {
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                
+                const title = document.createElement('div');
+                title.className = 'result-card-title';
+                title.textContent = `Sztanga #${index + 1} (${plan.stockLength} mm)`;
+                
+                const content = document.createElement('div');
+                content.className = 'result-card-content';
+                content.textContent = `Cięcia: ${plan.cuts.join(', ')} mm`;
+                
+                const waste = document.createElement('div');
+                waste.className = 'result-card-waste';
+                waste.textContent = `Strata: ${plan.waste} mm`;
+                
+                card.appendChild(title);
+                card.appendChild(content);
+                card.appendChild(waste);
+                resultsDiv.appendChild(card);
+            });
+            
+            const summary = document.createElement('div');
+            summary.className = 'summary';
+            summary.textContent = result.summary;
+            resultsDiv.appendChild(summary);
+        }
+        
+        function copyToClipboard() {
+            if (!currentResult) return;
+            
+            let text = 'Wyniki optymalizacji cięcia\n\n';
+            currentResult.plans.forEach((plan, index) => {
+                text += `Sztanga #${index + 1} (${plan.stockLength} mm): ${plan.cuts.join(', ')} (strata: ${plan.waste} mm)\n`;
+            });
+            text += `\n${currentResult.summary}`;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('copyBtn');
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Skopiowano';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+        
+        async function exportPDF() {
+            if (!currentResult) return;
+            
+            try {
+                const response = await fetch('/api/export/pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(currentResult)
+                });
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'wycinacz_wyniki.pdf';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                showError('Błąd podczas eksportu PDF');
+                console.error(error);
+            }
+        }
+        
+        async function exportTXT() {
+            if (!currentResult) return;
+            
+            try {
+                const response = await fetch('/api/export/txt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(currentResult)
+                });
+                
+                const text = await response.text();
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'wycinacz_wyniki.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                showError('Błąd podczas eksportu TXT');
+                console.error(error);
+            }
+        }
+        
+        // Enter key support
+        document.getElementById('cuts').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                calculateCuts();
+            }
+        });
+        
+        document.getElementById('stocks').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                calculateCuts();
+            }
+        });
+    </script>
+</body>
+</html>
