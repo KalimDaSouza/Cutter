@@ -9,37 +9,42 @@ Aplikacja webowa do optymalizacji cięcia kształtowników stalowych metodą Fir
 - 📋 **Kopiowanie do schowka** - szybki eksport wyników
 - 📄 **Eksport do PDF** - profesjonalne dokumenty do druku
 - 💾 **Eksport do TXT** - proste pliki tekstowe
-- 🎨 **Nowoczesny interfejs** - responsywny design dostosowany do urządzeń mobilnych
+- 🎨 **Nowoczesny interfejs** - responsywny design
 - ⚡ **Szybkie obliczenia** - natychmiastowe rezultaty
 
 ## 🛠️ Technologie
 
-- **Backend**: Spring Boot 3.2, Java 17
+- **Backend**: Node.js 18+, Express
 - **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
-- **PDF**: iText 7
-- **Build**: Maven
+- **PDF**: PDFKit
+- **Package Manager**: npm
 
 ## 📦 Wymagania
 
-- Java 17 lub nowszy
-- Maven 3.6+
+- Node.js 18.0.0 lub nowszy
+- npm 9.0.0 lub nowszy
 
 ## 🏃 Uruchomienie lokalne
 
-### Metoda 1: Maven
+### Instalacja zależności
 
 ```bash
-mvn spring-boot:run
+npm install
 ```
 
-### Metoda 2: JAR
+### Uruchomienie serwera
 
 ```bash
-mvn clean package
-java -jar target/wycinacz-1.0.0.jar
+npm start
 ```
 
-Aplikacja dostępna pod: **http://localhost:8080**
+### Tryb deweloperski (auto-restart)
+
+```bash
+npm run dev
+```
+
+Aplikacja dostępna pod: **http://localhost:3000**
 
 ## ☁️ Wdrożenie na Render
 
@@ -57,8 +62,12 @@ git push -u origin main
 
 1. Zaloguj się na https://render.com
 2. Kliknij **"New +"** → **"Web Service"**
-3. Połącz z GitHub i wybierz repozytorium `wycinacz`
-4. Render automatycznie wykryje konfigurację z `render.yaml`
+3. Połącz z GitHub i wybierz repozytorium
+4. Konfiguracja:
+   - **Name**: wycinacz
+   - **Environment**: Node
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
 5. Kliknij **"Create Web Service"**
 
 ### Krok 3: Gotowe! 🎉
@@ -69,66 +78,47 @@ Aplikacja będzie dostępna pod adresem: `https://wycinacz.onrender.com`
 
 1. **Wprowadź dane**
    - Wpisz długości elementów do cięcia (oddzielone przecinkami)
-   - Opcjonalnie zmień dostępne długości sztang magazynowych
+   - Opcjonalnie zmień dostępne długości sztang
 
 2. **Oblicz**
-   - Kliknij przycisk "Oblicz"
-   - Poczekaj na wyniki (zwykle < 1 sekundy)
+   - Kliknij "Oblicz"
+   - Wyniki pojawią się natychmiast
 
 3. **Eksportuj**
-   - Kopiuj wyniki do schowka
+   - Kopiuj do schowka
    - Eksportuj do PDF
-   - Zapisz jako plik TXT
+   - Zapisz jako TXT
 
 ## 🧮 Algorytm
 
 Aplikacja używa algorytmu **First Fit Decreasing (FFD)**:
 
-1. Sortuje wszystkie elementy od największego do najmniejszego
-2. Dla każdego elementu:
-   - Próbuje umieścić w istniejącej sztandze z wystarczającą przestrzenią
-   - Jeśli się nie da, wybiera najmniejszą nową sztangę, która pomieści element
-3. Minimalizuje:
-   - Liczbę użytych sztang
-   - Całkowite odpady materiału
+1. Sortuje elementy od największego do najmniejszego
+2. Dla każdego elementu próbuje umieścić go w istniejącej sztandze
+3. Jeśli się nie da, wybiera najmniejszą nową sztangę
+4. Minimalizuje liczbę sztang i odpady
 
 ### Przykład
 
 **Dane wejściowe:**
-- Elementy do cięcia: 4500, 3000, 2500, 7000 mm
-- Dostępne sztangi: 6000, 12100, 15100 mm
+- Elementy: 4500, 3000, 2500, 7000 mm
+- Sztangi: 6000, 12100, 15100 mm
 
 **Wynik:**
-- Sztanga #1 (12100 mm): 7000, 4500 mm → strata: 600 mm
-- Sztanga #2 (6000 mm): 3000, 2500 mm → strata: 500 mm
+- Sztanga #1 (12100 mm): 7000, 4500 → strata 600 mm
+- Sztanga #2 (6000 mm): 3000, 2500 → strata 500 mm
 - **Łączna strata**: 1100 mm (9.1%)
 
 ## 📁 Struktura projektu
 
 ```
-wycinacz/
-├── src/
-│   ├── main/
-│   │   ├── java/com/wycinacz/
-│   │   │   ├── WycinaczApplication.java       # Klasa główna
-│   │   │   ├── controller/
-│   │   │   │   ├── CuttingController.java     # REST API
-│   │   │   │   └── HomeController.java        # Routing
-│   │   │   ├── model/
-│   │   │   │   ├── CutPlan.java              # Model planu cięcia
-│   │   │   │   ├── OptimizationRequest.java  # DTO request
-│   │   │   │   └── OptimizationResult.java   # DTO response
-│   │   │   └── service/
-│   │   │       ├── CuttingOptimizer.java     # Algorytm FFD
-│   │   │       └── ExportService.java        # PDF/TXT export
-│   │   └── resources/
-│   │       ├── application.properties         # Konfiguracja
-│   │       └── templates/
-│   │           └── index.html                # Frontend
-├── pom.xml                                    # Maven dependencies
-├── render.yaml                                # Render config
-├── .gitignore
-└── README.md
+wycinacz-nodejs/
+├── server.js              # Serwer Express + API
+├── public/
+│   └── index.html        # Frontend
+├── package.json          # Zależności npm
+├── .gitignore           # Pliki ignorowane przez Git
+└── README.md            # Dokumentacja
 ```
 
 ## 🔌 API Endpoints
@@ -152,11 +142,6 @@ Optymalizuje plan cięcia.
       "stockLength": 12100,
       "cuts": [7000, 4500],
       "waste": 600
-    },
-    {
-      "stockLength": 6000,
-      "cuts": [3000, 2500],
-      "waste": 500
     }
   ],
   "totalStockUsed": 2,
@@ -170,30 +155,19 @@ Optymalizuje plan cięcia.
 Generuje PDF z wynikami.
 
 ### POST `/api/export/txt`
-Generuje plik tekstowy z wynikami.
+Generuje plik tekstowy.
+
+### GET `/health`
+Health check endpoint.
 
 ## 🤝 Contributing
 
-Zgłoszenia błędów i pull requesty są mile widziane!
-
-1. Fork projektu
-2. Stwórz branch (`git checkout -b feature/NowaFunkcja`)
-3. Commit zmian (`git commit -m 'Dodaj nową funkcję'`)
-4. Push do brancha (`git push origin feature/NowaFunkcja`)
-5. Otwórz Pull Request
+Pull requesty są mile widziane!
 
 ## 📝 Licencja
 
-MIT License - możesz swobodnie używać, modyfikować i dystrybuować.
+MIT License
 
 ## 👨‍💻 Autor
 
-Stworzone z ❤️ dla optymalizacji procesów produkcyjnych.
-
-## 🐛 Znane problemy
-
-Brak obecnie znanych problemów. Jeśli znajdziesz jakiś, zgłoś go w Issues!
-
-## 📮 Kontakt
-
-Pytania? Sugestie? Otwórz Issue na GitHubie!
+Stworzone dla optymalizacji procesów produkcyjnych.
